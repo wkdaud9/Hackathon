@@ -5,13 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuLinks = document.querySelectorAll('.category-link');
     const newsLayoutContainer = document.querySelector('.news-layout-container');
     const seeMoreBtn = document.getElementById('see-more-btn');
+    const loaderOverlay = document.getElementById('loader-overlay'); // 로딩 오버레이
     
     // 모달 관련 요소
     const modal = document.querySelector('.news-modal');
     const modalTitle = document.getElementById('modal-title');
     const modalOptions = document.getElementById('modal-options');
     const modalResult = document.getElementById('modal-result');
-    const modalLoader = document.getElementById('modal-loader');
     const summarizeBtn = document.getElementById('summarize-btn');
     const originalLinkBtn = document.getElementById('original-link-btn');
     const closeModalBtn = document.querySelector('.modal-close-btn');
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. 특정 카테고리의 뉴스를 API로 요청하는 함수
     const fetchAndRenderNews = async (category) => {
-        // 함수가 호출될 때마다 '더보기' 상태를 초기화
         newsLayoutContainer.classList.remove('expanded');
         seeMoreBtn.classList.remove('hidden');
 
@@ -120,8 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalOptions.style.display = 'flex';
         modalResult.style.display = 'none';
         modalResult.innerHTML = '';
-        modalLoader.style.display = 'none';
-
+        
         modal.showModal();
     };
 
@@ -130,8 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const articleUrl = summarizeBtn.dataset.url;
         if (!articleUrl) return;
 
-        modalOptions.style.display = 'none';
-        modalLoader.style.display = 'block';
+        modal.close();
+        loaderOverlay.classList.remove('hidden');
+        setTimeout(() => loaderOverlay.classList.add('visible'), 10);
 
         try {
             const response = await fetch('/api/summarize', {
@@ -142,13 +141,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('요약 정보를 불러오는 데 실패했습니다.');
             const data = await response.json();
             
+            modalOptions.style.display = 'none';
+            modalResult.style.display = 'block';
             modalResult.innerHTML = `<p>${data.summary.replace(/\n/g, '<br>')}</p>`;
+            modal.showModal();
 
         } catch (error) {
-            modalResult.innerHTML = `<p>${error.message}</p>`;
-        } finally {
-            modalLoader.style.display = 'none';
+            modalOptions.style.display = 'none';
             modalResult.style.display = 'block';
+            modalResult.innerHTML = `<p>${error.message}</p>`;
+            modal.showModal();
+        } finally {
+            loaderOverlay.classList.remove('visible');
+            setTimeout(() => loaderOverlay.classList.add('hidden'), 300);
         }
     });
 

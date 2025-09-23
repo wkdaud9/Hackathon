@@ -14,7 +14,8 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="서비스 로고">
             </a>
         </header>
-         <div class="nav-section">
+
+        <div class="nav-section">
             <div class="header-right">
                 <button class="header-btn login">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
@@ -25,16 +26,16 @@
                     <span>회원가입</span>
                 </button>
             </div>
-
-        <nav class="menu-bar">
-            <ul>
-                <li><a href="#" data-category="home" class="category-link active">홈</a></li>
-                <li><a href="#" data-category="politics" class="category-link">정치</a></li>
-                <li><a href="#" data-category="economy" class="category-link">경제</a></li>
-                <li><a href="#" data-category="international" class="category-link">국제</a></li>
-                <li><a href="#" data-category="it" class="category-link">IT</a></li>
-            </ul>
-        </nav>
+            <nav class="menu-bar">
+                <ul>
+                    <li><a href="#" data-category="home" class="category-link active">홈</a></li>
+                    <li><a href="#" data-category="politics" class="category-link">정치</a></li>
+                    <li><a href="#" data-category="economy" class="category-link">경제</a></li>
+                    <li><a href="#" data-category="international" class="category-link">국제</a></li>
+                    <li><a href="#" data-category="it" class="category-link">IT</a></li>
+                </ul>
+            </nav>
+        </div>
 
         <main class="main-content">
             <section class="today-news">
@@ -68,6 +69,11 @@
             <button class="modal-close-btn">닫기</button>
         </div>
     </dialog>
+
+    <div id="loader-overlay" class="hidden">
+        <div class="loader-spinner"></div>
+        <p class="loader-text">AI가 기사를 분석 중입니다...</p>
+    </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
