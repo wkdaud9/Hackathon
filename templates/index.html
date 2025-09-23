@@ -1,111 +1,74 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>뉴스 서비스</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
     <div class="container">
-      <header class="top-header">
-        <button class="logo-btn">로고</button>
-        <button class="login-btn">로그인</button>
-      </header>
+        <header class="top-header">
+            <a href="/" class="logo-link">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="서비스 로고">
+            </a>
+        </header>
+         <div class="nav-section">
+            <div class="header-right">
+                <button class="header-btn login">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <span>로그인</span>
+                </button>
+                <button class="header-btn signup">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>회원가입</span>
+                </button>
+            </div>
 
-      <nav class="menu-bar">
-        <ul>
-          <li>
-            <a href="#" data-category="home" class="category-link active">홈</a>
-          </li>
-          <li>
-            <a href="#" data-category="politics" class="category-link">정치</a>
-          </li>
-          <li>
-            <a href="#" data-category="economy" class="category-link">경제</a>
-          </li>
-          <li>
-            <a href="#" data-category="international" class="category-link"
-              >국제</a
-            >
-          </li>
-          <li><a href="#" data-category="it" class="category-link">IT</a></li>
-        </ul>
-      </nav>
+        <nav class="menu-bar">
+            <ul>
+                <li><a href="#" data-category="home" class="category-link active">홈</a></li>
+                <li><a href="#" data-category="politics" class="category-link">정치</a></li>
+                <li><a href="#" data-category="economy" class="category-link">경제</a></li>
+                <li><a href="#" data-category="international" class="category-link">국제</a></li>
+                <li><a href="#" data-category="it" class="category-link">IT</a></li>
+            </ul>
+        </nav>
 
-      <main class="main-content">
-        <section class="today-news">
-          <h2>오늘의 뉴스</h2>
-          <div class="news-layout">
-            {% if news_list %} {% set featured_news = news_list[0] %}
-            <article
-              class="news-item featured"
-              data-article-id="{{ featured_news.article_id }}"
-            >
-              <img
-                src="{{ featured_news.thumbnail }}"
-                alt="{{ featured_news.title }}"
-                class="image-placeholder"
-              />
-              <div class="article-content">
-                <h4>{{ featured_news.title }}</h4>
-                <p>{{ featured_news.content | striptags | truncate(100) }}</p>
-              </div>
-            </article>
+        <main class="main-content">
+            <section class="today-news">
+                <h2>오늘의 뉴스</h2>
+                <div class="news-layout-container">
+                    <div class="news-layout">
+                        <p>뉴스를 불러오는 중...</p>
+                    </div>
+                </div>
+                <button id="see-more-btn">더보기</button>
+            </section>
 
-            {% for news in news_list[1:] %}
-            <article class="news-item" data-article-id="{{ news.article_id }}">
-              <img
-                src="{{ news.thumbnail }}"
-                alt="{{ news.title }}"
-                class="image-placeholder small"
-              />
-              <div class="article-content">
-                <h5>{{ news.title }}</h5>
-                <p>{{ news.content | striptags | truncate(50) }}</p>
-              </div>
-            </article>
-            {% endfor %} {% else %}
-            <p>표시할 뉴스가 없습니다.</p>
-            {% endif %}
-          </div>
-        </section>
+            <aside class="ranking-sidebar">
+                <h2>랭킹</h2>
+                <div class="ranking-list">
+                    </div>
+            </aside>
+        </main>
+    </div> <dialog class="news-modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
 
-        <aside class="ranking-sidebar">
-          <h2>랭킹</h2>
-          <div class="ranking-list">
-            {% if ranking_list %} {% for news in ranking_list %}
-            <article
-              class="ranking-item"
-              data-article-id="{{ news.article_id }}"
-            >
-              <img
-                src="{{ news.thumbnail }}"
-                alt="{{ news.title }}"
-                class="image-placeholder rank"
-              />
-              <div class="article-content">
-                <h6>{{ news.title }}</h6>
-              </div>
-            </article>
-            {% endfor %} {% else %}
-            <p>랭킹 정보가 없습니다.</p>
-            {% endif %}
-          </div>
-        </aside>
-      </main>
-    </div>
-    <dialog class="news-modal">
-      <div class="modal-content">
-        <h2 id="modal-title"></h2>
-        <div id="modal-content-body"></div>
-        <button class="modal-close-btn">닫기</button>
-      </div>
+            <div id="modal-options">
+                <button id="summarize-btn" class="modal-action-btn">AI로 쉽게 풀어보기</button>
+                <a id="original-link-btn" href="#" target="_blank" class="modal-action-btn">원문 기사로 이동</a>
+            </div>
+
+            <div id="modal-result"></div>
+            <div id="modal-loader" style="display: none;">AI가 기사를 분석 중입니다...</div>
+
+            <button class="modal-close-btn">닫기</button>
+        </div>
     </dialog>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-  </body>
+</body>
 </html>

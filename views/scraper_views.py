@@ -26,23 +26,18 @@ NEWS_CATEGORIES = {
     'it': 'https://news.daum.net/digital'
 }
 
+# views/scraper_views.py -> get_article_details 함수 수정
+
 def get_article_details(url, category):
-    """기사 상세 페이지에서 HTML과 텍스트 버전의 본문을 모두 추출하는 함수"""
+    """(수정) 본문 없이 기사의 기본 정보와 URL만 추출하는 함수"""
     try:
+        # ... (response, soup, article_id, title, thumbnail 로직은 동일)
         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
-
         article_id = url.split('/')[-1]
-
         title_tag = soup.find("h3", class_="tit_view")
         title = title_tag.get_text(strip=True) if title_tag else "제목 없음"
-
-        content_tag = soup.find("div", class_="article_view")
-        content_html = str(content_tag) if content_tag else "<p>본문 없음</p>"
-        raw_text = content_tag.get_text() if content_tag else "본문 없음"
-        content_text = re.sub(r'[\s\n\t]+', ' ', raw_text).strip()
-
         thumbnail_url = "썸네일 없음"
         meta_tag = soup.find("meta", property="og:image")
         if meta_tag:
@@ -55,10 +50,9 @@ def get_article_details(url, category):
         return {
             'article_id': article_id,
             'title': title,
-            'content': content_html,
-            'content_text': content_text,
             'thumbnail': thumbnail_url,
             'category': category,
+            'url': url # ◀ 원문 URL 추가
         }
     except Exception as e:
         print(f"Error scraping {url}: {e}")
@@ -80,7 +74,6 @@ def get_news_urls(list_url):
             unique_urls.add(href)
 
     return list(unique_urls)[:10]
-
 @bp.route('/start')
 def start_scraping():
     """/scrape/start 주소로 접속하면 모든 카테고리의 뉴스를 크롤링하는 함수"""

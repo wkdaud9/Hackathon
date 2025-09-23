@@ -13,9 +13,12 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
+# views/main_views.py
+
 @bp.route('/')
 def index():
     """메인 HTML 뼈대를 렌더링하는 역할만 담당"""
+    # news_list나 ranking_list를 전달하는 코드를 모두 제거합니다.
     return render_template('index.html')
 
 # ▼▼▼ 데이터를 제공하는 API 엔드포인트를 새로 만듭니다 ▼▼▼
