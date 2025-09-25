@@ -5,48 +5,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuLinks = document.querySelectorAll('.category-link');
     const newsLayoutContainer = document.querySelector('.news-layout-container');
     const seeMoreBtn = document.getElementById('see-more-btn');
-    const loaderOverlay = document.getElementById('loader-overlay'); // 로딩 오버레이
+    const loaderOverlay = document.getElementById('loader-overlay');
     
-    // 모달 관련 요소
-    const modal = document.querySelector('.news-modal');
+    // 선택지 모달 요소
+    const choiceModal = document.querySelector('.news-modal');
     const modalTitle = document.getElementById('modal-title');
-    const modalOptions = document.getElementById('modal-options');
-    const modalResult = document.getElementById('modal-result');
     const summarizeBtn = document.getElementById('summarize-btn');
     const originalLinkBtn = document.getElementById('original-link-btn');
-    const closeModalBtn = document.querySelector('.modal-close-btn');
+    const choiceModalCloseBtn = document.querySelector('.modal-close-btn');
+
+    // 리더 뷰(요약+사전) 모달 요소
+    const readerView = document.getElementById('reader-view');
+    const readerTitle = document.getElementById('reader-title');
+    const readerContent = document.getElementById('reader-content');
+    const dictionaryCurrent = document.getElementById('dictionary-current');
+    const dictionaryHistory = document.getElementById('dictionary-history');
+    const readerCloseBtn = document.getElementById('reader-close-btn');
+
+    let summaryPromise = null;
 
     // 2. 뉴스 데이터를 받아 화면에 그려주는 함수
     const renderNews = (newsData, rankingData) => {
         newsLayout.innerHTML = ''; 
         rankingList.innerHTML = '';
-
         if (!newsData || newsData.length === 0) {
             newsLayout.innerHTML = '<p>표시할 뉴스가 없습니다.</p>';
             return;
         }
-
         const featured = newsData[0];
         const featuredHtml = `
             <article class="news-item featured" data-article-id="${featured.article_id}" data-url="${featured.url}">
                 <img src="${featured.thumbnail}" alt="${featured.title}" class="image-placeholder">
-                <div class="article-content">
-                    <h4>${featured.title}</h4>
-                </div>
+                <div class="article-content"><h4>${featured.title}</h4></div>
             </article>`;
         newsLayout.insertAdjacentHTML('beforeend', featuredHtml);
-
         newsData.slice(1).forEach(news => {
             const newsHtml = `
                 <article class="news-item" data-article-id="${news.article_id}" data-url="${news.url}">
                     <img src="${news.thumbnail}" alt="${news.title}" class="image-placeholder small">
-                    <div class="article-content">
-                        <h5>${news.title}</h5>
-                    </div>
+                    <div class="article-content"><h5>${news.title}</h5></div>
                 </article>`;
             newsLayout.insertAdjacentHTML('beforeend', newsHtml);
         });
-        
         if(rankingData && rankingData.length > 0) {
             rankingData.forEach(news => {
                 const rankingHtml = `
@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             rankingList.innerHTML = '<p>랭킹 정보가 없습니다.</p>';
         }
-
         attachModalEvents();
     };
 
@@ -67,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchAndRenderNews = async (category) => {
         newsLayoutContainer.classList.remove('expanded');
         seeMoreBtn.classList.remove('hidden');
-
         newsLayout.innerHTML = '<p>뉴스를 불러오는 중...</p>';
         rankingList.innerHTML = '<p>랭킹을 불러오는 중...</p>';
         try {
@@ -76,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderNews(data.news_list, data.ranking_list);
         } catch (error) {
             newsLayout.innerHTML = '<p>뉴스를 불러오는데 실패했습니다.</p>';
-            console.error("Error fetching news:", error);
         }
     };
 
@@ -85,10 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const category = e.target.dataset.category;
-            
             menuLinks.forEach(l => l.classList.remove('active'));
             e.target.classList.add('active');
-
             fetchAndRenderNews(category);
         });
     });
@@ -107,60 +102,94 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    // 7. 뉴스 클릭 시 모달을 "선택지" 상태로 여는 함수
+    // 7. 뉴스 클릭 시 선택지 모달을 여는 함수
     const openChoiceModal = (articleElement) => {
         const title = articleElement.querySelector('h4, h5, h6').textContent;
         const url = articleElement.dataset.url;
 
         modalTitle.textContent = title;
         originalLinkBtn.href = url;
-        summarizeBtn.dataset.url = url;
-
-        modalOptions.style.display = 'flex';
-        modalResult.style.display = 'none';
-        modalResult.innerHTML = '';
         
-        modal.showModal();
+        summaryPromise = fetch('/api/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        
+        choiceModal.showModal();
     };
 
     // 8. 'AI로 풀어보기' 버튼 클릭 이벤트
     summarizeBtn.addEventListener('click', async () => {
-        const articleUrl = summarizeBtn.dataset.url;
-        if (!articleUrl) return;
+        if (!summaryPromise) return;
 
-        modal.close();
+        choiceModal.close();
         loaderOverlay.classList.remove('hidden');
         setTimeout(() => loaderOverlay.classList.add('visible'), 10);
 
         try {
-            const response = await fetch('/api/summarize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: articleUrl })
-            });
+            const response = await summaryPromise;
             if (!response.ok) throw new Error('요약 정보를 불러오는 데 실패했습니다.');
             const data = await response.json();
             
-            modalOptions.style.display = 'none';
-            modalResult.style.display = 'block';
-            modalResult.innerHTML = `<p>${data.summary.replace(/\n/g, '<br>')}</p>`;
-            modal.showModal();
+            readerTitle.textContent = modalTitle.textContent;
+            readerContent.innerHTML = data.summary.replace(/\n/g, '<br>');
+            
+            // 사전 창 초기화
+            dictionaryCurrent.innerHTML = '<p class="placeholder">궁금한 단어를 드래그 해보세요!</p>';
+            dictionaryHistory.innerHTML = '';
+
+            readerView.classList.remove('hidden');
+            setTimeout(() => readerView.classList.add('visible'), 10);
 
         } catch (error) {
-            modalOptions.style.display = 'none';
-            modalResult.style.display = 'block';
-            modalResult.innerHTML = `<p>${error.message}</p>`;
-            modal.showModal();
+            alert(error.message);
         } finally {
             loaderOverlay.classList.remove('visible');
             setTimeout(() => loaderOverlay.classList.add('hidden'), 300);
         }
     });
 
-    // 9. 모달 닫기 이벤트
-    closeModalBtn.addEventListener('click', () => modal.close());
-    modal.addEventListener('click', (e) => (e.target === modal) && modal.close());
+    // 9. 단어 뜻 찾기(드래그) 이벤트
+    readerContent.addEventListener('mouseup', async () => {
+        const selectedText = window.getSelection().toString().trim();
+        if (selectedText.length > 0 && selectedText.length < 15) {
+            // 1. 기존 '현재' 검색 결과를 '기록'으로 이동
+            if (dictionaryCurrent.innerHTML && !dictionaryCurrent.querySelector('.placeholder')) {
+                const historyItem = document.createElement('div');
+                historyItem.classList.add('history-item');
+                historyItem.innerHTML = dictionaryCurrent.innerHTML.replace(/<h4/g, '<h5').replace(/<\/h4/g, '</h5>');
+                dictionaryHistory.prepend(historyItem);
+            }
+            
+            // 2. '현재' 창을 비우고 로딩 메시지 표시
+            dictionaryCurrent.innerHTML = '<p class="placeholder">AI가 문맥을 파악 중입니다...</p>';
+            
+            try {
+                // 3. 백엔드 API 호출
+                const response = await fetch('/api/define', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: selectedText, context: readerContent.textContent })
+                });
+                const data = await response.json();
 
-    // 10. 페이지가 처음 로드될 때 'home' 카테고리 뉴스를 자동으로 불러옵니다.
+                // 4. 새로운 검색 결과를 '현재' 창에 표시
+                dictionaryCurrent.innerHTML = `<h4>${data.word}</h4><p>${data.definition}</p>`;
+            } catch (error) {
+                dictionaryCurrent.innerHTML = '<p>단어 뜻 분석에 실패했습니다.</p>';
+            }
+        }
+    });
+
+    // 10. 모달 닫기 이벤트들
+    choiceModalCloseBtn.addEventListener('click', () => choiceModal.close());
+    choiceModal.addEventListener('click', (e) => (e.target === choiceModal) && choiceModal.close());
+    readerCloseBtn.addEventListener('click', () => {
+        readerView.classList.remove('visible');
+        setTimeout(() => readerView.classList.add('hidden'), 300);
+    });
+
+    // 11. 페이지가 처음 로드될 때 'home' 카테고리 뉴스를 자동으로 불러옵니다.
     fetchAndRenderNews('home');
 });

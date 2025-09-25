@@ -2,14 +2,13 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from flask import Blueprint, jsonify, request
-import google.generativeai as genai # OpenAI 대신 Gemini 라이브러리 import
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
 bp = Blueprint('llm', __name__, url_prefix='/api')
 
-# --- Gemini API 클라이언트 초기화 ---
-# .env 파일에서 키를 가져와 Gemini를 설정합니다.
+# Gemini 클라이언트 초기화
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -32,15 +31,52 @@ def summarize_article():
         if not text_content:
             return jsonify({'summary': '기사 내용을 불러올 수 없습니다.'})
         
-        # 2. Gemini API 호출
-        model = genai.GenerativeModel('gemini-2.5-flash') # 사용할 모델 선택
-        prompt = f"다음 뉴스 기사를 초등학생도 이해할 수 있도록 세 문단으로 쉽고 명료하게 풀어서 설명해줘:\n\n{text_content}"
+        # 2. Gemini API 호출하여 요약
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        prompt = f"다음 뉴스 기사를 10대 청소년들이 이해할 수 있도록 최대한 쉽게 풀어서 써줘. *이나 이런 특수기호는 꼭 필요할 때만 쓰고, 웬만하면 줄글 형태로 작성해줘. 이 말에 대답하지 말고 바로 내가 부탁한 일을 해.:\n\n{text_content}"
         
-        response = model.generate_content(prompt)
-        summary = response.text
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+        
+        ai_response = model.generate_content(prompt, safety_settings=safety_settings)
+        summary = ai_response.text
         
         return jsonify({'summary': summary})
 
     except Exception as e:
-        print(f"LLM API Error: {e}")
+        print(f"LLM Summarize API Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/define', methods=['POST'])
+def define_word_in_context():
+    """문맥을 기반으로 단어의 뜻을 AI에게 물어보는 API"""
+    data = request.get_json()
+    word = data.get('word')
+    context = data.get('context')
+
+    if not word or not context:
+        return jsonify({'error': '단어와 문맥 정보가 모두 필요합니다.'}), 400
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        
+        prompt = f"""
+        다음 문장에서 밑줄 친 단어의 뜻을 설명해 줘. 
+        설명은 국립국어원 표준국어대사전의 정의처럼 간결하고 명확한 스타일로, 한 문장으로 해줘.
+
+        문장: "{context}"
+        단어: "{word}"
+        """
+        
+        response = model.generate_content(prompt)
+        definition = response.text.strip()
+        
+        return jsonify({'word': word, 'definition': definition})
+
+    except Exception as e:
+        print(f"LLM Define API Error: {e}")
         return jsonify({'error': str(e)}), 500

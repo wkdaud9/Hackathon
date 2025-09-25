@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>뉴스 서비스</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
@@ -15,16 +15,16 @@
             </a>
         </header>
 
-        <div class="nav-section">
+       <div class="nav-section">
             <div class="header-right">
-                <button class="header-btn login">
+                <a href="{{ url_for('auth.login') }}" class="header-btn login">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     <span>로그인</span>
-                </button>
-                <button class="header-btn signup">
+                </a>
+                <a href="{{ url_for('auth.signup') }}" class="header-btn signup">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>회원가입</span>
-                </button>
+                </a>
             </div>
             <nav class="menu-bar">
                 <ul>
@@ -57,24 +57,39 @@
     </div> <dialog class="news-modal">
         <div class="modal-content">
             <h2 id="modal-title"></h2>
-
             <div id="modal-options">
                 <button id="summarize-btn" class="modal-action-btn">AI로 쉽게 풀어보기</button>
                 <a id="original-link-btn" href="#" target="_blank" class="modal-action-btn">원문 기사로 이동</a>
             </div>
-
-            <div id="modal-result"></div>
-            <div id="modal-loader" style="display: none;">AI가 기사를 분석 중입니다...</div>
-
             <button class="modal-close-btn">닫기</button>
         </div>
     </dialog>
+
+    <div id="reader-view" class="hidden">
+        <div class="reader-container">
+            <div class="article-pane">
+                <h2 id="reader-title"></h2>
+                <div id="reader-content"></div>
+            </div>
+            <div class="dictionary-pane">
+                <h3 class="dictionary-title">
+                    <i class="fa-solid fa-book-open"></i> 단어 뜻 풀이
+                </h3>
+                <div id="dictionary-content-wrapper">
+                    <div id="dictionary-current">
+                        </div>
+                    <div id="dictionary-history">
+                        </div>
+                </div>
+            </div>
+        <button id="reader-close-btn">&times;</button>
+    </div>
 
     <div id="loader-overlay" class="hidden">
         <div class="loader-spinner"></div>
         <p class="loader-text">AI가 기사를 분석 중입니다...</p>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

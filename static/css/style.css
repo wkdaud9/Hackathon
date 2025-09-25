@@ -1,6 +1,3 @@
-
-/* static/style.css (전체 코드) */
-
 /* --- 기본 스타일 --- */
 body {
     margin: 0;
@@ -25,30 +22,37 @@ button {
     padding: 20px;
 }
 
-/* --- 헤더 & 메뉴바 (수정) --- */
+/* --- 헤더 & 메뉴바 --- */
 .top-header {
     display: flex;
-    justify-content: center; /* 로고를 중앙 정렬 */
+    justify-content: center;
     align-items: center;
     margin-bottom: 15px;
-}
-/* ▼▼▼ .header-left 선택자를 삭제했습니다 ▼▼▼ */
-.header-right {
-    flex: 1;
 }
 
 .logo-link {
     display: flex;
     justify-content: center;
 }
+
 .logo-link img {
     height: 150px;
     width: auto;
     display: block;
 }
+
+/* 메뉴바와 버튼 그룹을 감싸는 컨테이너 */
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 25px;
+}
+
 .header-right {
     display: flex;
     gap: 10px;
+    align-self: flex-end;
+    margin-bottom: 8px;
 }
 
 /* 헤더 버튼 공통 스타일 */
@@ -74,21 +78,6 @@ button {
     font-weight: bold;
 }
 
-/* 메뉴바와 버튼 그룹을 감싸는 컨테이너 */
-.nav-section {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 25px;
-}
-
-.header-right {
-    display: flex;
-    gap: 10px;
-    align-self: flex-end; /* 오른쪽 끝으로 정렬 */
-    margin-bottom: 8px; /* 메뉴바와의 간격 */
-}
-
-/* 메뉴바는 원래 스타일로 되돌림 */
 .menu-bar {
     border: 1px solid #dee2e6;
     border-radius: 8px;
@@ -208,7 +197,6 @@ h2 {
     flex-shrink: 0;
 }
 
-
 /* --- 랭킹 목록 스타일 --- */
 .ranking-list {
     display: flex;
@@ -242,7 +230,7 @@ h2 {
     display: none;
 }
 
-/* --- 모달 스타일 --- */
+/* --- 선택지 모달 스타일 --- */
 .news-modal {
     width: 80%;
     max-width: 800px;
@@ -250,7 +238,6 @@ h2 {
     border-radius: 16px;
     padding: 2em;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
-    transition: height 0.3s ease-in-out;
 }
 .news-modal::backdrop {
     background-color: rgba(0, 0, 0, 0.5);
@@ -264,19 +251,6 @@ h2 {
     margin-top: 0;
     font-size: 24px;
     text-align: center;
-}
-#modal-content-body {
-    line-height: 1.7;
-    text-align: justify;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-#modal-content-body img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 1.5em auto;
-    border-radius: 8px;
 }
 #modal-options {
     display: flex;
@@ -295,6 +269,19 @@ h2 {
     text-decoration: none;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+}
+.modal-close-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #f1f3f5;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.modal-close-btn:hover {
+    background-color: #e9ecef;
 }
 
 /* 주요 액션 버튼 스타일 (파란색) */
@@ -319,67 +306,246 @@ h2 {
     background-color: #f8f9fa;
 }
 
-.modal-close-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    padding: 8px 16px;
-    border: none;
-    background-color: #f1f3f5;
-    cursor: pointer;
-    border-radius: 8px;
-}
-.modal-close-btn:hover {
-    background-color: #e9ecef;
-}
-
-#loader-overlay {
-    position: fixed; /* 화면 전체에 고정 */
+/* --- 리더 뷰 스타일 --- */
+#reader-view {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* 반투명 검은 배경 */
+    background-color: rgba(23, 24, 28, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+}
+#reader-view.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+.reader-container {
+    display: flex;
+    gap: 25px;
+    width: 90%;
+    max-width: 1200px;
+    height: 85vh;
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+#reader-view.visible .reader-container {
+    transform: translateY(0);
+}
+
+.article-pane {
+    flex: 3;
+    background: white;
+    border-radius: 16px;
+    padding: 2.5em;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.dictionary-pane {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2.5em;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 리더 뷰 내부 타이포그래피 */
+#reader-title {
+    font-size: 2em;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 1.2em;
+    flex-shrink: 0;
+    text-align: left;
+}
+#reader-content {
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 16px;
+    color: #343a40;
+}
+#reader-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5em auto;
+    display: block;
+}
+.dictionary-pane {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2.5em;
+    display: flex; /* 자식 요소(제목, 내용)를 세로로 배치 */
+    flex-direction: column;
+    overflow: hidden; /* 내부 스크롤을 위해 중요 */
+}
+.dictionary-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 0;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5em;
+    font-size: 1.2em;
+    color: #495057;
+    flex-shrink: 0;
+}
+#dictionary-content-wrapper {
+    overflow-y: auto; /* 내용이 길어지면 스크롤 자동 생성 */
+    flex-grow: 1;
+}
+#dictionary-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#dictionary-content h4 {
+    margin-top: 0;
+    font-size: 1.5em;
+    margin-bottom: 0.5em;
+}
+#dictionary-content p {
+    font-size: 15px;
+    line-height: 1.7;
+    margin: 0;
+}
+* 현재 검색 결과 스타일 */
+#dictionary-current {
+    padding-bottom: 1.5em;
+}
+
+#dictionary-current h4 {
+    margin-top: 0;
+    font-size: 1.5em;
+    margin-bottom: 0.5em;
+}
+#dictionary-current p {
+    font-size: 15px;
+    line-height: 1.7;
+    margin: 0;
+}
+#dictionary-current p.placeholder {
+    text-align: center;
+    color: #868e96;
+    padding-top: 2em;
+}
+
+/* 검색 기록 스타일 */
+#dictionary-history .history-item {
+    padding: 1.5em 0;
+    border-top: 1px solid #e9ecef;
+    opacity: 0.5; /* 이전 기록은 약간 흐리게 */
+}
+#dictionary-history h5 {
+    margin: 0 0 0.5em 0;
+    font-size: 1.2em;
+}
+#dictionary-history p {
+    margin: 0;
+    font-size: 14px;
+}
+#dictionary-content p.placeholder {
+    text-align: center;
+    color: #868e96;
+}
+
+/* 리더 뷰 닫기 버튼 */
+#reader-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-size: 1.5em;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+#reader-close-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: rotate(90deg);
+}
+
+/* --- 순차적 애니메이션 --- */
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+#reader-view.visible .article-pane > *,
+#reader-view.visible .dictionary-pane > * {
+    animation: fadeInSlideUp 0.5s forwards cubic-bezier(0.25, 1, 0.5, 1);
+    opacity: 0;
+}
+#reader-view.visible #reader-title { animation-delay: 0.2s; }
+#reader-view.visible #reader-content { animation-delay: 0.3s; }
+#reader-view.visible .dictionary-title { animation-delay: 0.4s; }
+#reader-view.visible #dictionary-content { animation-delay: 0.5s; }
+
+
+/* --- 로딩 오버레이 스타일 --- */
+#loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(2px);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* 다른 모든 요소들 위에 표시 */
+    z-index: 9999;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
-    pointer-events: none; /* 숨겨져 있을 때 클릭 방지 */
+    pointer-events: none;
 }
-
 #loader-overlay.visible {
     opacity: 1;
-    pointer-events: auto; /* 보일 때 상호작용 가능하도록 */
+    pointer-events: auto;
 }
-
-/* 로딩 스피너 애니메이션 */
 .loader-spinner {
     width: 60px;
     height: 60px;
-    border: 5px solid #f3f3f3; /* 연한 회색 원 */
-    border-top: 5px solid #3498db; /* 파란색 회전 부분 */
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
     border-radius: 50%;
-    animation: spin 1s linear infinite; /* 1초에 한 바퀴씩 무한 회전 */
+    animation: spin 1s linear infinite;
 }
-
 .loader-text {
     color: white;
     margin-top: 20px;
     font-size: 1.2em;
     font-weight: 500;
 }
-
-/* 스피너 회전 애니메이션 정의 */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
-/* 기존 .hidden 클래스가 있다면 그대로 사용, 없다면 추가 */
 .hidden {
     display: none;
 }

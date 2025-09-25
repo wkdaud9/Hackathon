@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>회원가입 | 이해했슈</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lo_style.css') }}">
+</head>
+<body>
+    <main class="auth">
+        <a class="brand center" href="/">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="서비스 로고">
+        </a>
+
+        <form id="signupForm" class="card">
+            <label for="email">이메일</label>
+            <input type="email" id="email" placeholder="user@example.com" required />
+
+            <label for="pw">비밀번호</label>
+            <input type="password" id="pw" placeholder="영문, 숫자 포함 8자 이상" minlength="8" required />
+
+            <label for="pw-confirm">비밀번호 확인</label>
+            <input type="password" id="pw-confirm" placeholder="••••••••" minlength="8" required />
+
+            <label for="name">이름</label>
+            <input type="text" id="name" placeholder="홍길동" required />
+
+            <label for="level">수준</label>
+            <div class="custom-select-container">
+                <div class="custom-select-display" id="level-display">Level 1 – 쉬운 설명</div>
+                <ul class="custom-select-options hidden" id="level-options">
+                    <li class="option-item" data-value="1">Level 1 – 쉬운 설명</li>
+                    <li class="option-item" data-value="2">Level 2 – 표준 설명</li>
+                    <li class="option-item" data-value="3">Level 3 – 심화/신조어 해설</li>
+                </ul>
+                <input type="hidden" id="level" name="level" value="1" />
+            </div>
+
+            <button type="submit" class="btn primary block">가입하기</button>
+        </form>
+
+        <p class="signup">
+            이미 계정이 있으신가요?
+            <a href="{{ url_for('auth.login') }}" class="link">로그인</a>
+        </p>
+    </main>
+
+    <script>
+        // 커스텀 셀렉트 박스 로직
+        const levelDisplay = document.getElementById('level-display');
+        const levelOptions = document.getElementById('level-options');
+        const levelInput = document.getElementById('level');
+
+        levelDisplay.addEventListener('click', () => {
+            levelOptions.classList.toggle('hidden');
+        });
+
+        levelOptions.addEventListener('click', (e) => {
+            if (e.target.tagName === 'LI') {
+                levelDisplay.textContent = e.target.textContent;
+                levelInput.value = e.target.dataset.value;
+                levelOptions.classList.add('hidden');
+            }
+        });
+
+        // 폼 제출 이벤트
+        document.getElementById("signupForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            // 1. 프론트엔드 유효성 검사
+            const password = document.getElementById('pw').value;
+            const confirmPassword = document.getElementById('pw-confirm').value;
+
+            if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+                alert("비밀번호는 영문, 숫자를 포함하여 8자 이상이어야 합니다.");
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert("비밀번호가 일치하지 않습니다.");
+                return;
+            }
+
+            // 2. 서버로 보낼 데이터 준비
+            const formData = {
+                email: document.getElementById('email').value,
+                password: password,
+                name: document.getElementById('name').value,
+                level: levelInput.value
+            };
+
+            // 3. 백엔드 API 호출
+            try {
+                const response = await fetch("{{ url_for('auth.signup_post') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("회원가입이 완료되었습니다! 메인 페이지로 이동합니다.");
+                    window.location.href = "/"; // 메인 페이지로 이동
+                } else {
+                    // 서버에서 받은 에러 메시지 보여주기 (예: "User already registered")
+                    alert(`회원가입 실패: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("오류가 발생했습니다. 다시 시도해주세요.");
+            }
+        });
+    </script>
+</body>
+</html>
