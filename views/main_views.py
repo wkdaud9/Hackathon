@@ -1,25 +1,22 @@
 import os
-from flask import Blueprint, render_template, jsonify # jsonify 추가
+from flask import Blueprint, render_template, jsonify, session # jsonify 추가
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
+bp = Blueprint('main', __name__)
 
-bp = Blueprint('main', __name__) # url_prefix 제거
-
-# ... (Supabase 클라이언트 초기화는 동일)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
-# views/main_views.py
-
 @bp.route('/')
 def index():
-    """메인 HTML 뼈대를 렌더링하는 역할만 담당"""
-    # news_list나 ranking_list를 전달하는 코드를 모두 제거합니다.
-    return render_template('index.html')
+    """메인 HTML 뼈대 렌더링 시, 로그인 상태를 함께 전달"""
+    # 세션에서 'user' 정보를 가져옴. 없으면 None.
+    user_info = session.get('user')
+    return render_template('index.html', user=user_info)
+
 
 # ▼▼▼ 데이터를 제공하는 API 엔드포인트를 새로 만듭니다 ▼▼▼
 @bp.route('/api/articles/<category_name>')

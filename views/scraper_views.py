@@ -39,9 +39,9 @@ def get_article_details(url, category):
         title_tag = soup.find("h3", class_="tit_view")
         title = title_tag.get_text(strip=True) if title_tag else "제목 없음"
         thumbnail_url = "썸네일 없음"
-        meta_tag = soup.find("meta", property="og:image")
-        if meta_tag:
-            thumbnail_url = meta_tag['content']
+        thumbnail_tag = soup.find("meta", property="og:image")
+        if thumbnail_tag:
+            thumbnail_url = thumbnail_tag['content']
         else:
             img_tag = soup.find("img", class_="thumb_g_article")
             if img_tag:
