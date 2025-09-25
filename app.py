@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask
-from views import scraper_views, main_views, news_views, llm_views, auth_views
+from views import scraper_views, main_views, news_views, llm_views, auth_views, mypage_views # mypage_views 추가
 
 # .env 파일에서 환경 변수를 로드합니다.
 load_dotenv()
@@ -18,6 +18,8 @@ app.register_blueprint(main_views.bp)
 app.register_blueprint(news_views.bp)
 app.register_blueprint(llm_views.bp)
 app.register_blueprint(auth_views.bp) # ◀ auth_views.bp 등록 코드를 추가합니다.
+app.register_blueprint(mypage_views.bp) # ◀ mypage_views 등록
+
 
 if __name__ == '__main__':
     app.run(debug=True)

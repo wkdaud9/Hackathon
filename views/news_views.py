@@ -1,36 +1,39 @@
 import os
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, session
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
+bp = Blueprint('news', __name__, url_prefix='/api/news')
 
-bp = Blueprint('news', __name__, url_prefix='/news')
-
+# Supabase 클라이언트 초기화
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-@bp.route('/<article_id>')
-def news_detail_api(article_id):
-    """(수정) 조회수를 직접 가져와 1을 더한 후 저장하는 API"""
+@bp.route('/view/<article_id>', methods=['POST'])
+def increment_view_count(article_id):
+    """기사 ID를 받아 조회수를 1 증가시키고, 읽은 기록을 남기는 API"""
     try:
-        # 1. 먼저 기사 내용을 가져옵니다.
-        response = supabase.table('articles').select('*').eq('article_id', article_id).single().execute()
+        # 1. DB 함수(increment_views)를 호출하여 조회수 1 증가 (기존 방식 유지)
+        supabase.rpc('increment_views', {'article_id_text': article_id}).execute()
         
-        if response.data:
-            article = response.data
-            current_views = article.get('views', 0) # 현재 조회수 (없으면 0)
-            new_views = current_views + 1
-
-            # 2. 조회수를 1 증가시켜 DB에 업데이트합니다.
-            supabase.table('articles').update({'views': new_views}).eq('article_id', article_id).execute()
-
-            # 3. 처음에 가져온 기사 데이터를 JSON으로 반환합니다.
-            return jsonify(article)
-        else:
-            return jsonify({'error': 'Article not found'}), 404
-
+        # ▼▼▼ '최근 읽은 기사' 기록 로직 추가 ▼▼▼
+        # 2. 로그인 상태인지 확인하고, '읽은 기사'로 기록합니다.
+        if 'user' in session:
+            try:
+                # upsert를 사용하면 중복 오류 없이 안전하게 기록을 추가/갱신합니다.
+                supabase.table('user_read_history').upsert({
+                    'user_id': session['user']['id'],
+                    'article_id': article_id,
+                    'read_at': 'now()'
+                }).execute()
+                print(f"✅ User {session['user']['id'][:5]}... read article {article_id}")
+            except Exception as e:
+                print(f"Read history logging failed: {e}")
+        
+        return {"status": "success"}, 200
+        
     except Exception as e:
-        print(f"API Error in news_views: {e}")
-        return jsonify({'error': str(e)}), 500
+        print(f"Failed to update view count for {article_id}: {e}")
+        return {"status": "error", "message": str(e)}, 500

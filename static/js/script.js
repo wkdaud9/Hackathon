@@ -112,21 +112,29 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // 7. 뉴스 클릭 시 선택지 모달을 여는 함수
-  const openChoiceModal = (articleElement) => {
-    const title = articleElement.querySelector("h4, h5, h6").textContent;
-    const url = articleElement.dataset.url;
+   // 7. 뉴스 클릭 시 선택지 모달을 열고, 조회수를 올리는 함수 (수정)
+    const openChoiceModal = (articleElement) => {
+        const title = articleElement.querySelector('h4, h5, h6').textContent;
+        const url = articleElement.dataset.url;
+        const articleId = articleElement.dataset.articleId;
 
-    modalTitle.textContent = title;
-    originalLinkBtn.href = url;
+        // ▼▼▼ 조회수 증가 API 호출 (결과는 기다리지 않음) ▼▼▼
+        if (articleId) {
+            fetch(`/api/news/view/${articleId}`, { method: 'POST' })
+                .catch(error => console.error('Failed to record view:', error));
+        }
 
-    summaryPromise = fetch("/api/summarize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: url }),
-    });
-
-    choiceModal.showModal();
-  };
+        modalTitle.textContent = title;
+        originalLinkBtn.href = url;
+        
+        summaryPromise = fetch('/api/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+        
+        choiceModal.showModal();
+    };
 
   // 8. 'AI로 풀어보기' 버튼 클릭 이벤트
   summarizeBtn.addEventListener("click", async () => {

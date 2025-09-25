@@ -37,6 +37,7 @@ button {
 
 .logo-link img {
   height: 150px;
+  margin-bottom: -40px;
   width: auto;
   display: block;
 }
