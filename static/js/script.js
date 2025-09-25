@@ -36,17 +36,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const featuredHtml = `
             <article class="news-item featured" data-article-id="${featured.article_id}" data-url="${featured.url}">
                 <img src="${featured.thumbnail}" alt="${featured.title}" class="image-placeholder">
-                <div class="article-content"><h4>${featured.title}</h4></div>
+                <div class="article-content">
+                    <h4>${featured.title}</h4>
+                    <p>${(featured.content_text || '').substring(0, 100)}...</p>
+                </div>
             </article>`;
         newsLayout.insertAdjacentHTML('beforeend', featuredHtml);
+
         newsData.slice(1).forEach(news => {
             const newsHtml = `
                 <article class="news-item" data-article-id="${news.article_id}" data-url="${news.url}">
                     <img src="${news.thumbnail}" alt="${news.title}" class="image-placeholder small">
-                    <div class="article-content"><h5>${news.title}</h5></div>
+                    <div class="article-content">
+                        <h5>${news.title}</h5>
+                        <p>${(news.content_text || '').substring(0, 50)}...</p>
+                    </div>
                 </article>`;
             newsLayout.insertAdjacentHTML('beforeend', newsHtml);
         });
+        
         if(rankingData && rankingData.length > 0) {
             rankingData.forEach(news => {
                 const rankingHtml = `
@@ -106,16 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const openChoiceModal = (articleElement) => {
         const title = articleElement.querySelector('h4, h5, h6').textContent;
         const url = articleElement.dataset.url;
-
         modalTitle.textContent = title;
         originalLinkBtn.href = url;
-        
         summaryPromise = fetch('/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })
         });
-        
         choiceModal.showModal();
     };
 
@@ -124,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!summaryPromise) return;
 
         choiceModal.close();
+        // ▼▼▼ 로딩 오버레이 표시 로직 ▼▼▼
         loaderOverlay.classList.remove('hidden');
         setTimeout(() => loaderOverlay.classList.add('visible'), 10);
 
@@ -134,8 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             readerTitle.textContent = modalTitle.textContent;
             readerContent.innerHTML = data.summary.replace(/\n/g, '<br>');
-            
-            // 사전 창 초기화
             dictionaryCurrent.innerHTML = '<p class="placeholder">궁금한 단어를 드래그 해보세요!</p>';
             dictionaryHistory.innerHTML = '';
 
@@ -143,8 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => readerView.classList.add('visible'), 10);
 
         } catch (error) {
-            alert(error.message);
+            Swal.fire('오류', error.message, 'error'); // 에러 발생 시 SweetAlert2 사용
         } finally {
+            // ▼▼▼ 로딩 오버레이 숨기기 로직 ▼▼▼
             loaderOverlay.classList.remove('visible');
             setTimeout(() => loaderOverlay.classList.add('hidden'), 300);
         }
@@ -154,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
     readerContent.addEventListener('mouseup', async () => {
         const selectedText = window.getSelection().toString().trim();
         if (selectedText.length > 0 && selectedText.length < 15) {
-            // 1. 기존 '현재' 검색 결과를 '기록'으로 이동
             if (dictionaryCurrent.innerHTML && !dictionaryCurrent.querySelector('.placeholder')) {
                 const historyItem = document.createElement('div');
                 historyItem.classList.add('history-item');
@@ -162,19 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 dictionaryHistory.prepend(historyItem);
             }
             
-            // 2. '현재' 창을 비우고 로딩 메시지 표시
             dictionaryCurrent.innerHTML = '<p class="placeholder">AI가 문맥을 파악 중입니다...</p>';
             
             try {
-                // 3. 백엔드 API 호출
                 const response = await fetch('/api/define', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ word: selectedText, context: readerContent.textContent })
                 });
                 const data = await response.json();
-
-                // 4. 새로운 검색 결과를 '현재' 창에 표시
                 dictionaryCurrent.innerHTML = `<h4>${data.word}</h4><p>${data.definition}</p>`;
             } catch (error) {
                 dictionaryCurrent.innerHTML = '<p>단어 뜻 분석에 실패했습니다.</p>';
@@ -189,6 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
         readerView.classList.remove('visible');
         setTimeout(() => readerView.classList.add('hidden'), 300);
     });
+    // ▼▼▼ 리더 뷰 바깥쪽 클릭 시 닫기 이벤트 추가 ▼▼▼
+    readerView.addEventListener('click', (e) => {
+        if (e.target === readerView) {
+            readerView.classList.remove('visible');
+            setTimeout(() => readerView.classList.add('hidden'), 300);
+        }
+    });
+
 
     // 11. 페이지가 처음 로드될 때 'home' 카테고리 뉴스를 자동으로 불러옵니다.
     fetchAndRenderNews('home');
