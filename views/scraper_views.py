@@ -106,3 +106,29 @@ def start_scraping():
             return jsonify({'status': 'error', 'message': str(e)}), 500
             
     return jsonify({'status': 'no_data', 'message': '저장할 뉴스가 없습니다.'})
+# ▼▼▼ 특정 기사만 다시 크롤링하는 함수 추가 ▼▼▼
+@bp.route('/refetch/<article_id>')
+def refetch_article(article_id):
+    """기사 ID를 받아 해당 기사만 다시 크롤링하고 DB에 업데이트하는 API"""
+    if not article_id:
+        return jsonify({'status': 'error', 'message': '기사 ID가 필요합니다.'}), 400
+
+    target_url = f"https://v.daum.net/v/{article_id}"
+    print(f"--- 🔄 특정 기사 재수집 시작: {target_url} ---")
+    
+    # 재수집 시 카테고리는 'manual'로 지정하거나, 기존 카테고리를 DB에서 조회하여 사용할 수 있습니다.
+    # 여기서는 간단하게 'manual'로 지정합니다.
+    details = get_article_details(target_url, 'manual_refetch')
+
+    if details:
+        print(f"✅ 재수집 성공. DB에 업데이트합니다...")
+        try:
+            # upsert를 사용하여 기존 데이터를 덮어씁니다.
+            supabase.table('articles').upsert(details).execute()
+            print("✅ 데이터 업데이트 성공!")
+            return jsonify({'status': 'success', 'message': f"기사({article_id})를 성공적으로 재수집하고 업데이트했습니다."})
+        except Exception as e:
+            print(f"❌ 데이터 업데이트 실패: {e}")
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+            
+    return jsonify({'status': 'error', 'message': '해당 기사를 수집하는 데 실패했습니다.'}), 500
