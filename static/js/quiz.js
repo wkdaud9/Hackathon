@@ -235,8 +235,9 @@ function showNextQuestion() {
   }
 }
 
-function showResult() {
-  testHeader.classList.add("hidden"); // ◀ 결과 표시 시 헤더 숨기기
+async function showResult() {
+  // ◀ 함수를 async로 변경
+  if (testHeader) testHeader.classList.add("hidden");
   quizContainer.classList.add("hidden");
   resultContainer.classList.remove("hidden");
 
@@ -248,30 +249,42 @@ function showResult() {
   let level = "";
   let description = "";
 
-  // 새로운 레벨 판별 로직 적용
+  // 레벨 판별 로직
   if (score >= 9) {
-    // 신조어 정답이 2개 이상일 경우 Level 3으로 판별
     if (neologismCorrect >= 2) {
-      level = "Level 3";
+      level = "3"; // 숫자 3으로 변경
       description =
         "축하합니다!\n당신은 뉴스의 숨겨진 맥락과 의도를 파악하고 비판적으로 사고하는 뛰어난 능력을 가졌습니다.\n가장 심도 있는 뉴스 콘텐츠를 추천합니다.";
     } else {
-      level = "Level 2";
+      level = "2"; // 숫자 2로 변경
       description =
         "훌륭합니다!\n당신은 높은 점수를 얻었지만,\n신조어 이해도에서 아쉬움이 남습니다.\n일반적인 뉴스 콘텐츠를 추천합니다.";
     }
   } else if (score >= 5) {
-    level = "Level 2";
+    level = "2"; // 숫자 2로 변경
     description =
       "훌륭합니다!\n당신은 뉴스의 핵심 내용을 잘 이해하고 여러 정보를 연결하는 능력이 뛰어납니다.\n일반적인 뉴스 콘텐츠를 추천합니다.";
   } else {
-    level = "Level 1";
+    level = "1"; // 숫자 1로 변경
     description =
       "걱정하지 마세요!\n당신은 뉴스에 대한 기초적인 정보를 파악하는 능력을 가졌습니다.\n쉽고 간결하게 요약된 뉴스 콘텐츠부터 시작하는 것을 추천합니다.";
   }
 
-  levelResultText.innerText = `${level}`;
+  levelResultText.innerText = `Level ${level}`;
   levelDescriptionText.innerText = description;
+
+  // ▼▼▼ 여기가 핵심 수정 부분입니다 ▼▼▼
+  // 판별된 레벨을 서버로 보내 업데이트 요청
+  try {
+    await fetch("/mypage/api/update_level", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level: level }),
+    });
+    // 성공 여부와 관계없이 사용자는 결과를 보고 메인으로 이동하면 됨
+  } catch (error) {
+    console.error("Failed to update level:", error);
+  }
 }
 
 function updateProgress() {

@@ -41,8 +41,16 @@ def summarize_article():
         truncated_text = text_content[:MAX_CHARS]
         
         
-        # 1. 세션에서 사용자 레벨을 가져옵니다. 없으면 기본값 '1'을 사용합니다.
-        user_level = session.get('user', {}).get('user_metadata', {}).get('user_level', '1')
+        user_level = '1'
+        if 'user' in session:
+            # 로그인 상태라면, DB의 profiles 테이블에서 최신 레벨을 직접 조회
+            user_id = session['user']['id']
+            try:
+                profile_res = supabase.table('profiles').select('user_level').eq('id', user_id).single().execute()
+                if profile_res.data:
+                    user_level = profile_res.data.get('user_level', '1')
+            except Exception as e:
+                print(f"Profile level fetching failed: {e}")
 
         # 2. 레벨별로 다른 프롬프트를 정의합니다.
         prompts = {
@@ -53,6 +61,8 @@ def summarize_article():
         
         # 3. 사용자 레벨에 맞는 프롬프트를 선택합니다.
         prompt = prompts.get(str(user_level), prompts['1']) # 해당 레벨이 없으면 1로 기본 설정
+
+        print(user_level)
 
         model = genai.GenerativeModel('gemini-2.5-flash-lite-preview-06-17')
         safety_settings = [{"category": c, "threshold": "BLOCK_NONE"} for c in ["HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT"]]
